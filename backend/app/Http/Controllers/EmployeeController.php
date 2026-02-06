@@ -33,17 +33,10 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(\App\Http\Requests\StoreEmployeeRequest $request)
     {
-        $data = $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'name' => 'required|string',
-            'phone' => 'required|string',
-            'division' => 'required|exists:divisions,id', // Note: input uses 'division' (uuid)
-            'position' => 'required|string',
-        ]);
+        $data = $request->validated();
         
-        // Map 'division' input to 'division_id' for creation
         $data['division_id'] = $data['division'];
         unset($data['division']);
 
@@ -55,15 +48,9 @@ class EmployeeController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(\App\Http\Requests\UpdateEmployeeRequest $request, $id)
     {
-        $data = $request->validate([
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'name' => 'required|string',
-            'phone' => 'required|string',
-            'division' => 'required|exists:divisions,id',
-            'position' => 'required|string',
-        ]);
+        $data = $request->validated();
         
         $data['division_id'] = $data['division'];
         unset($data['division']);

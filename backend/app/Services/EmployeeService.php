@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Repositories\Interfaces\EmployeeRepositoryInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class EmployeeService implements EmployeeServiceInterface
 {
@@ -21,31 +23,58 @@ class EmployeeService implements EmployeeServiceInterface
 
     public function create(array $data)
     {
-        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-            $path = $data['image']->store('employees', 'public');
-            $data['image'] = Storage::url($path);
-        }
-        
-        return $this->employeeRepository->create($data);
+        return DB::transaction(function () use ($data) {
+            if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+                $path = $data['image']->store('employees', 'public');
+                $data['image'] = Storage::url($path);
+            }
+            
+            return $this->employeeRepository->create($data);
+        });
     }
 
     public function update($id, array $data)
     {
-        // Check if image update
-         if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-            $path = $data['image']->store('employees', 'public');
-            $data['image'] = Storage::url($path);
-            
-            // Optionally delete old image
+        return DB::transaction(function () use ($id, $data) {
             $employee = $this->employeeRepository->find($id);
-            // logic to delete old image...
-        }
 
-        return $this->employeeRepository->update($id, $data);
+            if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+                $this->deleteOldImage($employee->image);
+
+                $path = $data['image']->store('employees', 'public');
+                $data['image'] = Storage::url($path);
+            }
+
+            return $this->employeeRepository->update($id, $data);
+        });
     }
 
     public function delete($id)
     {
-        return $this->employeeRepository->delete($id);
+        return DB::transaction(function () use ($id) {
+            $employee = $this->employeeRepository->find($id);
+            
+            if ($employee) {
+                $this->deleteOldImage($employee->image);
+            }
+
+            return $this->employeeRepository->delete($id);
+        });
+    }
+
+    private function deleteOldImage($imageUrl)
+    {
+        if (!$imageUrl) {
+            return;
+        }
+
+        $path = str_replace(url('/storage') . '/', '', $imageUrl);
+
+        $parsedPath = parse_url($imageUrl, PHP_URL_PATH);
+        $relativePath = Str::after($parsedPath, '/storage/');
+
+        if (Storage::disk('public')->exists($relativePath)) {
+            Storage::disk('public')->delete($relativePath);
+        }
     }
 }

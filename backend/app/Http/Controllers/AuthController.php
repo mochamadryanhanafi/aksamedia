@@ -15,12 +15,9 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
-    public function login(Request $request)
+    public function login(\App\Http\Requests\LoginRequest $request)
     {
-        $credentials = $request->validate([
-            'username' => 'required',
-            'password' => 'required',
-        ]);
+        $credentials = $request->validated();
 
         $data = $this->authService->login($credentials);
 

@@ -33,7 +33,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
             <select 
                 v-model="selectedDivision" 
-                @change="fetchEmployees" 
+                @change="handleDivisionChange" 
                 class="w-full pl-10 pr-8 py-2.5 bg-gray-50 dark:bg-gray-900/50 border-none rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:bg-white dark:focus:bg-gray-900 transition-all font-medium appearance-none cursor-pointer"
             >
                 <option value="">All Divisions</option>
@@ -236,12 +236,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, watch } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '../stores/auth'
+import { useRoute, useRouter } from 'vue-router'
 import Navbar from '../components/Navbar.vue'
 
 const authStore = useAuthStore()
+const router = useRouter()
+const route = useRoute()
+
 const employees = ref([])
 const divisions = ref([])
 const search = ref('')
@@ -262,7 +266,7 @@ const form = reactive({
 
 const fetchDivisions = async () => {
     try {
-        const res = await axios.get('http://localhost:8002/api/divisions', {
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/divisions`, {
              headers: { Authorization: `Bearer ${authStore.token}` }
         })
         divisions.value = res.data.data.divisions
@@ -273,7 +277,7 @@ const fetchDivisions = async () => {
 
 const fetchEmployees = async (page = 1) => {
     try {
-        const res = await axios.get('http://localhost:8002/api/employees', {
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/employees`, {
             params: {
                 page,
                 name: search.value,
@@ -284,6 +288,15 @@ const fetchEmployees = async (page = 1) => {
         employees.value = res.data.data.employees
         currentPage.value = res.data.pagination.current_page
         lastPage.value = res.data.pagination.last_page
+        
+        // Update URL
+        router.push({
+            query: {
+                page: currentPage.value,
+                ...(search.value && { name: search.value }),
+                ...(selectedDivision.value && { division_id: selectedDivision.value })
+            }
+        })
     } catch (e) {
         console.error(e)
     }
@@ -295,6 +308,10 @@ const debouncedFetch = () => {
     timeout = setTimeout(() => {
         fetchEmployees(1)
     }, 300)
+}
+
+const handleDivisionChange = () => {
+    fetchEmployees(1)
 }
 
 const changePage = (page) => {
@@ -342,14 +359,14 @@ const saveEmployee = async () => {
     try {
         if (isEditing.value) {
             formData.append('_method', 'PUT')
-            await axios.post(`http://localhost:8002/api/employees/${form.mainId || form.id}`, formData, {
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/employees/${form.mainId || form.id}`, formData, {
                  headers: { 
                      Authorization: `Bearer ${authStore.token}`,
                      'Content-Type': 'multipart/form-data'
                  }
             })
         } else {
-            await axios.post('http://localhost:8002/api/employees', formData, {
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/employees`, formData, {
                  headers: { 
                      Authorization: `Bearer ${authStore.token}`,
                      'Content-Type': 'multipart/form-data'
@@ -370,7 +387,7 @@ const saveEmployee = async () => {
 const deleteEmployee = async (id) => {
     if (!confirm('Are you sure?')) return
     try {
-        await axios.delete(`http://localhost:8002/api/employees/${id}`, {
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/employees/${id}`, {
              headers: { Authorization: `Bearer ${authStore.token}` }
         })
         fetchEmployees(currentPage.value)
@@ -380,7 +397,12 @@ const deleteEmployee = async (id) => {
 }
 
 onMounted(() => {
+    // Restore state from URL
+    if (route.query.name) search.value = route.query.name
+    if (route.query.division_id) selectedDivision.value = route.query.division_id
+    if (route.query.page) currentPage.value = parseInt(route.query.page)
+    
     fetchDivisions()
-    fetchEmployees()
+    fetchEmployees(currentPage.value)
 })
 </script>

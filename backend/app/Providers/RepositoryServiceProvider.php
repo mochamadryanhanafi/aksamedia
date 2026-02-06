@@ -34,6 +34,14 @@ class RepositoryServiceProvider extends ServiceProvider
             \App\Services\EmployeeServiceInterface::class,
             \App\Services\EmployeeService::class
         );
+        $this->app->bind(
+            \App\Repositories\Interfaces\NilaiRepositoryInterface::class,
+            \App\Repositories\Eloquents\NilaiRepository::class
+        );
+        $this->app->bind(
+            \App\Services\NilaiServiceInterface::class,
+            \App\Services\NilaiService::class
+        );
     }
 
     /**

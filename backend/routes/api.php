@@ -20,5 +20,6 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // SQL Bonus Endpoints (Placeholder for now)
-Route::get('/nilaiRT', function() { return 'TODO'; });
-Route::get('/nilaiST', function() { return 'TODO'; });
+// SQL Bonus Endpoints
+Route::get('/nilaiRT', [App\Http\Controllers\NilaiController::class, 'nilaiRT']);
+Route::get('/nilaiST', [App\Http\Controllers\NilaiController::class, 'nilaiST']);
