@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <Navbar />
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
       <!-- Header Section -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
@@ -16,6 +16,28 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
             Add Employee
         </button>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+            <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Employees</p>
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalEmployees }}</h3>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+            <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Divisions</p>
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ divisions.length }}</h3>
+            </div>
+        </div>
       </div>
 
       <!-- Filters -->
@@ -54,12 +76,35 @@
               <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tbody v-if="isLoading">
+            <tr v-for="i in 5" :key="i" class="animate-pulse border-b border-gray-100 dark:border-gray-700">
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                  <div class="ml-4 space-y-2">
+                    <div class="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <div class="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded ml-auto inline-block"></div>
+                <div class="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded ml-2 inline-block"></div>
+              </td>
+            </tr>
+          </tbody>
+          <TransitionGroup v-else tag="tbody" name="list" class="divide-y divide-gray-100 dark:divide-gray-700">
             <tr v-for="emp in employees" :key="emp.id" class="group hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                     <div class="h-10 w-10 flex-shrink-0 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden">
-                         <img v-if="emp.image" :src="emp.image" class="w-full h-full object-cover" />
+                     <img v-if="emp.image" :src="getImageUrl(emp.image)" class="w-full h-full object-cover" />
                          <span v-else>{{ emp.name.charAt(0) }}</span>
                     </div>
                     <div class="ml-4">
@@ -81,47 +126,71 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button @click="openModal(emp)" class="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Edit">
+                    <button @click="openModal(emp)" class="text-green-500 hover:text-green-700 transition-colors" title="Edit">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                     </button>
-                    <button @click="deleteEmployee(emp.id)" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Delete">
+                    <button @click="deleteEmployee(emp.id)" class="text-red-500 hover:text-red-700 transition-colors" title="Delete">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
                 </div>
               </td>
             </tr>
-          </tbody>
+          </TransitionGroup>
         </table>
       </div>
 
       <!-- Mobile Cards -->
       <div class="grid grid-cols-1 gap-4 sm:hidden">
-        <div v-for="emp in employees" :key="emp.id" class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <div class="flex items-center gap-4 mb-3">
-                <div class="h-12 w-12 flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden">
-                     <img v-if="emp.image" :src="emp.image" class="w-full h-full object-cover" />
-                     <span v-else>{{ emp.name.charAt(0) }}</span>
+        <template v-if="isLoading">
+            <div v-for="i in 3" :key="i" class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                    <div class="space-y-2 flex-1">
+                        <div class="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        <div class="h-3 w-1/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ emp.name }}</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ emp.position }}</p>
+                <div class="space-y-3 mb-4">
+                    <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div class="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
                 </div>
-            </div>
-            <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
-                <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    {{ emp.phone }}
-                </div>
-                <div class="flex items-center gap-2">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-                    {{ emp.division?.name }}
+                <div class="flex gap-2 border-t border-gray-100 dark:border-gray-700 pt-3">
+                    <div class="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                    <div class="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
                 </div>
             </div>
-            <div class="flex gap-2 border-t border-gray-100 dark:border-gray-700 pt-3">
-                <button @click="openModal(emp)" class="flex-1 py-2 text-center text-sm font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
-                <button @click="deleteEmployee(emp.id)" class="flex-1 py-2 text-center text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 transition-colors">Delete</button>
-            </div>
-        </div>
+        </template>
+        <template v-else>
+            <TransitionGroup tag="div" name="list" class="contents">
+                <div v-for="emp in employees" :key="emp.id" class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <!-- ... existing card content ... -->
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="h-12 w-12 flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden">
+                            <img v-if="emp.image" :src="getImageUrl(emp.image)" class="w-full h-full object-cover" />
+                            <span v-else>{{ emp.name.charAt(0) }}</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ emp.name }}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ emp.position }}</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            {{ emp.phone }}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                            {{ emp.division?.name }}
+                        </div>
+                    </div>
+                    <div class="flex gap-2 border-t border-gray-100 dark:border-gray-700 pt-3">
+                        <button @click="openModal(emp)" class="flex-1 py-2 text-center text-sm font-medium text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 rounded-lg hover:bg-green-100 transition-colors">Edit</button>
+                        <button @click="deleteEmployee(emp.id)" class="flex-1 py-2 text-center text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 transition-colors">Delete</button>
+                    </div>
+                </div>
+            </TransitionGroup>
+        </template>
       </div>
 
       <!-- Pagination -->
@@ -203,18 +272,25 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Profile Image</label>
                                 <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-xl hover:border-blue-500 transition-colors cursor-pointer relative bg-gray-50 dark:bg-gray-700/50">
-                                    <input type="file" @change="handleFileChange" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                    <input type="file" @change="handleFileChange" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                                     <div class="space-y-1 text-center">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
-                                        <div class="flex text-sm text-gray-600 dark:text-gray-400">
-                                            <span class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                                                <span>Upload a file</span>
-                                            </span>
-                                            <p class="pl-1">or drag and drop</p>
+                                        <div v-if="imagePreview" class="relative group">
+                                            <img :src="imagePreview" class="mx-auto h-32 w-32 object-cover rounded-xl shadow-md" />
+                                            <div class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                                                 <p class="text-white font-medium text-sm">Click to change</p>
+                                            </div>
                                         </div>
-                                        <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                                        <div v-else>
+                                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                            <div class="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
+                                                <span class="relative cursor-pointer bg-white dark:bg-transparent rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                                    <span>Upload a file</span>
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -232,6 +308,14 @@
             </div>
         </div>
     </Transition>
+
+    <ConfirmDialog 
+        :show="showConfirm" 
+        title="Delete Employee" 
+        :message="confirmMessage" 
+        @confirm="handleConfirm" 
+        @cancel="showConfirm = false" 
+    />
   </div>
 </template>
 
@@ -239,10 +323,13 @@
 import { ref, onMounted, reactive, watch } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '../stores/auth'
+import { useToastStore } from '../stores/toast'
 import { useRoute, useRouter } from 'vue-router'
 import Navbar from '../components/Navbar.vue'
+import ConfirmDialog from '../components/ConfirmDialog.vue'
 
 const authStore = useAuthStore()
+const toast = useToastStore()
 const router = useRouter()
 const route = useRoute()
 
@@ -252,9 +339,15 @@ const search = ref('')
 const selectedDivision = ref('')
 const currentPage = ref(1)
 const lastPage = ref(1)
+const totalEmployees = ref(0)
+const isLoading = ref(false)
 
 const showModal = ref(false)
+const showConfirm = ref(false)
+const confirmCallback = ref(null)
+const confirmMessage = ref('')
 const isEditing = ref(false)
+const imagePreview = ref(null)
 const form = reactive({
     id: null,
     name: '',
@@ -276,6 +369,7 @@ const fetchDivisions = async () => {
 }
 
 const fetchEmployees = async (page = 1) => {
+    isLoading.value = true
     try {
         const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/employees`, {
             params: {
@@ -288,6 +382,7 @@ const fetchEmployees = async (page = 1) => {
         employees.value = res.data.data.employees
         currentPage.value = res.data.pagination.current_page
         lastPage.value = res.data.pagination.last_page
+        totalEmployees.value = res.data.pagination.total
         
         // Update URL
         router.push({
@@ -299,6 +394,8 @@ const fetchEmployees = async (page = 1) => {
         })
     } catch (e) {
         console.error(e)
+    } finally {
+        isLoading.value = false
     }
 }
 
@@ -322,18 +419,22 @@ const openModal = (emp = null) => {
     isEditing.value = !!emp
     if (emp) {
         form.id = emp.id
+        form.mainId = emp.id // Store original ID for updates
         form.name = emp.name
         form.phone = emp.phone
-        form.division = emp.division_id || emp.division.id
+        form.division = emp.division_id || emp.division?.id
         form.position = emp.position
         form.image = null 
+        imagePreview.value = emp.image ? getImageUrl(emp.image) : null
     } else {
         form.id = null
+        form.mainId = null
         form.name = ''
         form.phone = ''
         form.division = ''
         form.position = ''
         form.image = null
+        imagePreview.value = null
     }
     showModal.value = true
 }
@@ -343,7 +444,11 @@ const closeModal = () => {
 }
 
 const handleFileChange = (e) => {
-    form.image = e.target.files[0]
+    const file = e.target.files[0]
+    if (file) {
+        form.image = file
+        imagePreview.value = URL.createObjectURL(file)
+    }
 }
 
 const saveEmployee = async () => {
@@ -361,39 +466,56 @@ const saveEmployee = async () => {
             formData.append('_method', 'PUT')
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/employees/${form.mainId || form.id}`, formData, {
                  headers: { 
-                     Authorization: `Bearer ${authStore.token}`,
-                     'Content-Type': 'multipart/form-data'
+                     Authorization: `Bearer ${authStore.token}`
                  }
             })
         } else {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/employees`, formData, {
                  headers: { 
-                     Authorization: `Bearer ${authStore.token}`,
-                     'Content-Type': 'multipart/form-data'
+                     Authorization: `Bearer ${authStore.token}`
                  }
             })
         }
         closeModal()
         if (isEditing.value) {
+            toast.success('Successfully updated employee data')
             fetchEmployees(currentPage.value)
         } else {
+            toast.success('Successfully created new employee')
             fetchEmployees(1)
         }
     } catch (e) {
-        alert(e.response?.data?.message || 'Error occurred')
+        toast.error(e.response?.data?.message || 'An error occurred while saving')
     }
 }
 
-const deleteEmployee = async (id) => {
-    if (!confirm('Are you sure?')) return
-    try {
-        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/employees/${id}`, {
-             headers: { Authorization: `Bearer ${authStore.token}` }
-        })
-        fetchEmployees(currentPage.value)
-    } catch (e) {
-        alert('Failed to delete')
+const deleteEmployee = (id) => {
+    confirmMessage.value = 'Are you sure you want to delete this employee? This action cannot be undone.'
+    confirmCallback.value = async () => {
+        try {
+            await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/employees/${id}`, {
+                 headers: { Authorization: `Bearer ${authStore.token}` }
+            })
+            toast.success('Successfully deleted employee')
+            fetchEmployees(currentPage.value)
+        } catch (e) {
+            toast.error('Failed to delete employee')
+        }
     }
+    showConfirm.value = true
+}
+
+const handleConfirm = () => {
+    showConfirm.value = false
+    if (confirmCallback.value) confirmCallback.value()
+}
+
+const getImageUrl = (path) => {
+    if (!path) return ''
+    if (path.startsWith('http')) return path
+    // Remove /api from base url if present to get root domain
+    const baseUrl = import.meta.env.VITE_API_BASE_URL.replace('/api', '')
+    return `${baseUrl}${path}`
 }
 
 onMounted(() => {
@@ -406,3 +528,21 @@ onMounted(() => {
     fetchEmployees(currentPage.value)
 })
 </script>
+
+<style>
+.list-move,
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.5s ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.list-leave-active {
+  position: absolute;
+}
+</style>

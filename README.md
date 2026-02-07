@@ -1,71 +1,91 @@
 # Aksamedia Full Stack Developer Intern Test
 
-This repository contains the solution for the Aksamedia Full Stack Developer Intern Test, developed by [Your Name/Username].
+This repository contains the solution for the Aksamedia Full Stack Developer Intern Test. It features a robust **Laravel** backend (Clean Architecture) and a modern **Vue.js 3** frontend (Tailwind CSS), all fully Dockerized for easy deployment.
 
-It features a **Laravel** backend (Clean Architecture) and a **Vue.js 3** frontend (Tailwind CSS), running in a Dockerized environment.
-
-## Tech Stack
-
--   **Frontend**: Vue.js 3, Pinia, Vue Router, Tailwind CSS, Axios.
--   **Backend**: Laravel 11, Sanctum (Auth), Clean Architecture (Service/Repository Pattern).
--   **Database**: MySQL 8 (Dockerized).
--   **Cache**: Redis (Dockerized).
--   **DevOps**: Docker Compose for orchestrating MySQL, Redis, and PHPMyAdmin.
-
-## Features
+## 🚀 Tech Stack
 
 ### Frontend
--   **Authentication**: Login/Logout with persistent session management.
--   **Dashboard**:
-    -   Employee Management (CRUD).
-    -   Real-time search and filtering (by Division).
-    -   **State Persistence**: Search terms, filters, and pagination sync with the URL query string.
-    -   **Responsive Design**: Desktop table view and Mobile card view.
-    -   **Glassmorphism UI**: Modern aesthetic with gradients and blur effects.
-    -   **Dark Mode**: Automatically adapts to system preferences.
--   **Compliance Polish**: Custom built dropdown for Navbar logout (no external UI libraries).
+-   **Framework**: Vue.js 3 (Composition API)
+-   **State Management**: Pinia (Persistent Store)
+-   **Routing**: Vue Router
+-   **Styling**: Tailwind CSS (Dark Mode enabled)
+-   **HTTP Client**: Axios
+-   **Build Tool**: Vite
 
 ### Backend
--   **Clean Architecture**: Separation of concerns using Controllers, Services, and Repositories.
--   **API Endpoints**: RESTful APIs for Auth, Divisions, and Employees.
--   **SQL Bonus Tasks**:
-    -   `/api/nilaiRT`: Complex grouping of student scores.
-    -   `/api/nilaiST`: Weighted score calculation using **SQL Window Functions** (`SUM ... OVER PARTITION`).
+-   **Framework**: Laravel 11
+-   **Architecture**: Clean Architecture (Service/Repository Pattern)
+-   **Database**: MySQL 8
+-   **Caching/Session**: Redis (Configurable)
+-   **Tools**: PHP 8.2, Composer
 
-## Installation & Setup
+### DevOps
+-   **Containerization**: Docker & Docker Compose
+-   **Services**: Nginx, MySQL, Redis, BMP (PhpMyAdmin)
+
+---
+
+## ✨ Features
+
+### 🎨 Frontend
+-   **Authentication**: Secure Login/Logout with JWT (Sanctum) and persistent session.
+-   **Dashboard with Glassmorphism UI**:
+    -   **CRUD Operations**: Create, Read, Update, Delete employees effortlessly.
+    -   **Real-time Search & Filtering**: Filter by name and division instantly.
+    -   **State Persistence**: Search queries and filters sync with the URL for shareable links.
+    -   **Responsive Design**: Optimized for Desktop (Table view) and Mobile (Card view).
+    -   **Glassy Navbar**: Fixed, translucent navbar with blur effect.
+    -   **Dark Mode**: Automatically respects system preferences, with a manual toggle.
+-   **Advanced Reporting**:
+    -   **Realizing Potential (RT)**: Grouped scoring analysis.
+    -   **Smart Test (ST)**: Weighted score calculation with complex logic.
+-   **User Experience**: Skeleton loading screens, smooth transitions, and toast notifications.
+
+### ⚙️ Backend
+-   **Clean Architecture**: Strict separation of concerns (Controller -> Service -> Repository).
+-   **Restful API**: Standardized endpoints for Auth, Divisions, and Employees.
+-   **Optimization**: 
+    -   Database transactions for data integrity.
+    -   Efficient image handling (auto-cleanup of old files).
+-   **SQL Mastery**: Implementation of complex SQL queries including Window Functions (`SUM ... OVER PARTITION`).
+
+---
+
+## 🛠️ Installation & Setup
 
 ### Prerequisites
--   Docker & Docker Compose
--   Node.js & NPM
--   PHP & Composer (Local) or use Docker container
+-   [Docker](https://www.docker.com/) & Docker Compose
+-   [Node.js](https://nodejs.org/) (v16+)
+-   [Composer](https://getcomposer.org/)
 
 ### 1. Start Infrastructure (Docker)
-Start MySQL, Redis, and PHPMyAdmin containers.
+Start the database and cache services using Docker Compose.
 
 ```bash
 docker-compose up -d
 ```
+*Services started: `aksamedia_mysql`, `aksamedia_redis`, `aksamedia_pma`.*
 
 ### 2. Backend Setup
-Navigate to the `backend` directory and set up Laravel.
+Configure and start the Laravel API.
 
 ```bash
 cd backend
 
-# Install dependencies
+# Install PHP dependencies
 composer install
 
-# Environment setup
+# Configure Environment
 cp .env.example .env
-# Edit .env to match Docker ports (DB_PORT=3306, APP_URL=http://localhost:8002)
+# Ensure DB_PORT=3306 and Redis settings match your docker-compose config.
 
-# Generate Key
+# Generate App Key
 php artisan key:generate
 
 # Run Migrations & Seeders
 php artisan migrate --seed
 
-# Link Storage
+# Link Storage for Images
 php artisan storage:link
 
 # Start Server
@@ -73,41 +93,50 @@ php artisan serve --port=8002
 ```
 
 ### 3. Frontend Setup
-Navigate to the `frontend` directory.
+Install and run the Vue.js application.
 
 ```bash
 cd frontend
 
-# Install dependencies
+# Install Dependencies
 npm install
 
-# Start Dev Server
+# Start Development Server
 npm run dev
 ```
 
-### 4. SQL Bonus Task Setup (Import Data)
-To verify the `/nilaiRT` and `/nilaiST` endpoints, you must import the provided SQL data.
+### 4. Import Sample Data (Bonus)
+To fully test the Reporting features (`/nilaiRT` & `/nilaiST`), import the provided SQL dump.
 
 ```bash
-# From project root
+# Run from project root
 cat nilai.sql | docker exec -i aksamedia_mysql mariadb -u root -proot aksamedia
 ```
 
-## Access Points
+---
 
--   **Frontend**: [http://localhost:5173](http://localhost:5173)
--   **Backend API**: [http://localhost:8002](http://localhost:8002)
--   **PHPMyAdmin**: [http://localhost:8081](http://localhost:8081)
+## 🔗 Access Points
 
-## API Endpoints (Bonus)
-
--   **Realizing Potential Report**:
-    `GET http://localhost:8002/api/nilaiRT`
-    *Logic: Filters `materi_uji_id=7`, groups by NISN.*
-
--   **Weighted Score Report**:
-    `GET http://localhost:8002/api/nilaiST`
-    *Logic: Filters `materi_uji_id=4`, calculates total using SQL Window Functions with specific multipliers (Verbal: 41.67, etc.), sorts by Total Descending.*
+| Service | URL | Credentials |
+|:---|:---|:---|
+| **Frontend App** | [http://localhost:5173](http://localhost:5173) | Register/Login in app |
+| **Backend API** | [http://localhost:8002](http://localhost:8002) | - |
+| **PHPMyAdmin** | [http://localhost:8081](http://localhost:8081) | User: `root`, Pass: `root` |
 
 ---
-Completed by [Your Name] for Aksamedia.
+
+## 📚 API Highlights
+
+### Employee Management
+-   `GET /api/employees`: List employees (supports `name` and `division_id` filters).
+-   `POST /api/employees`: Create new employee (with image upload).
+-   `PUT /api/employees/{id}`: Update employee.
+-   `DELETE /api/employees/{id}`: Soft delete employee.
+
+### Complex Reports
+-   **GET /api/nilaiRT**: Returns student scores grouped by NISN with `materi_uji_id=7`.
+-   **GET /api/nilaiST**: Returns calculated total scores using weighted averages for `materi_uji_id=4`.
+
+---
+
+Developed with ❤️ for Aksamedia.

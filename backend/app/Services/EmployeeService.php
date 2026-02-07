@@ -6,6 +6,7 @@ use App\Repositories\Interfaces\EmployeeRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Exception;
 
 class EmployeeService implements EmployeeServiceInterface
 {
@@ -24,12 +25,21 @@ class EmployeeService implements EmployeeServiceInterface
     public function create(array $data)
     {
         return DB::transaction(function () use ($data) {
-            if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-                $path = $data['image']->store('employees', 'public');
-                $data['image'] = Storage::url($path);
+            $filePath = null;
+
+            try {
+                if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+                    $filePath = $data['image']->store('employees', 'public');
+                    $data['image'] = Storage::disk('public')->url($filePath);
+                }
+                
+                return $this->employeeRepository->create($data);
+            } catch (Exception $e) {
+                if ($filePath) {
+                    Storage::disk('public')->delete($filePath);
+                }
+                throw $e;
             }
-            
-            return $this->employeeRepository->create($data);
         });
     }
 
@@ -37,15 +47,28 @@ class EmployeeService implements EmployeeServiceInterface
     {
         return DB::transaction(function () use ($id, $data) {
             $employee = $this->employeeRepository->find($id);
+            $newFilePath = null;
+            $oldImage = $employee->image;
 
-            if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-                $this->deleteOldImage($employee->image);
+            try {
+                if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+                    $newFilePath = $data['image']->store('employees', 'public');
+                    $data['image'] = Storage::disk('public')->url($newFilePath);
+                }
 
-                $path = $data['image']->store('employees', 'public');
-                $data['image'] = Storage::url($path);
+                $updated = $this->employeeRepository->update($id, $data);
+
+                if ($newFilePath && $oldImage) {
+                    $this->deleteOldImage($oldImage);
+                }
+
+                return $updated;
+            } catch (Exception $e) {
+                if ($newFilePath) {
+                    Storage::disk('public')->delete($newFilePath);
+                }
+                throw $e;
             }
-
-            return $this->employeeRepository->update($id, $data);
         });
     }
 
@@ -54,11 +77,13 @@ class EmployeeService implements EmployeeServiceInterface
         return DB::transaction(function () use ($id) {
             $employee = $this->employeeRepository->find($id);
             
-            if ($employee) {
+            $deleted = $this->employeeRepository->delete($id);
+
+            if ($deleted && $employee->image) {
                 $this->deleteOldImage($employee->image);
             }
 
-            return $this->employeeRepository->delete($id);
+            return $deleted;
         });
     }
 
@@ -67,8 +92,6 @@ class EmployeeService implements EmployeeServiceInterface
         if (!$imageUrl) {
             return;
         }
-
-        $path = str_replace(url('/storage') . '/', '', $imageUrl);
 
         $parsedPath = parse_url($imageUrl, PHP_URL_PATH);
         $relativePath = Str::after($parsedPath, '/storage/');

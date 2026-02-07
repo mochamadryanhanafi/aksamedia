@@ -17,13 +17,11 @@ class NilaiService implements NilaiServiceInterface
     {
         $data = $this->nilaiRepository->getNilaiRT();
 
-        // Grouping using Collection as permitted
         return $data->groupBy('nisn')->map(function ($items) {
             $student = $items->first();
             $nilaiRt = [];
             foreach ($items as $item) {
-                // Determine key based on nama_pelajaran
-                // Assuming nama_pelajaran matches keys: realistic, investigative, artistic, social, enterprising, conventional
+               
                 $key = strtolower($item->nama_pelajaran);
                 $nilaiRt[$key] = $item->skor;
             }

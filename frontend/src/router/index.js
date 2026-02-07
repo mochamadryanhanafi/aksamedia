@@ -18,7 +18,18 @@ const router = createRouter({
             component: DashboardView,
             meta: { requiresAuth: true }
         },
-        // Add other routes here
+        {
+            path: '/reports',
+            name: 'reports',
+            component: () => import('../views/ReportView.vue'),
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/profile',
+            name: 'profile',
+            component: () => import('../views/ProfileView.vue'),
+            meta: { requiresAuth: true }
+        },
     ]
 })
 
